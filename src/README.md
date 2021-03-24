@@ -73,7 +73,7 @@ int8_t result = sbtreeGet(state, (void*) keyPtr, (void*) dataPtr);
 ```c
 /* Iterator with filter on keys */
 sbtreeIterator it;
-int32_t *itKey, *itData;
+uint32_t *itKey, *itData;
 
 uint32_t minKey = 1, maxKey = 1000;     
 it.minKey = &minKey; 
