@@ -23,8 +23,8 @@ The sequential B-tree (SBtree) efficiently stores data in a B-tree structure tha
 
 ```c
 /* Configure file-based storage. RAW flash memory storage is also possible. */
-fileStorageState *storage = (fileStorageState*) malloc(sizeof(fileStorageState));
-storage->fileName = (char*) "myfile.bin";
+fileStorageState *storage = malloc(sizeof(fileStorageState));
+storage->fileName = "myfile.bin";
 if (fileStorageInit((storageState*) storage) != 0)
 {
     printf("Error: Cannot initialize storage!\n");
@@ -32,16 +32,16 @@ if (fileStorageInit((storageState*) storage) != 0)
 }
 
 /* Configure buffer */
-dbbuffer *buffer = (dbbuffer*) malloc(sizeof(dbbuffer));
+dbbuffer* buffer = malloc(sizeof(dbbuffer));
 buffer->pageSize = 512;
 uint16_t M = 10;
 buffer->numPages = M;
-buffer->status = (id_t*) malloc(sizeof(id_t)*M);
+buffer->status = malloc(sizeof(id_t)*M);
 buffer->buffer  = malloc((size_t) buffer->numPages * buffer->pageSize);   
 buffer->storage = (storageState*) storage; 
 
 /* Configure SBTree state */
-sbtreeState *state = (sbtreeState*) malloc(sizeof(sbtreeState));
+sbtreeState* state = malloc(sizeof(sbtreeState));
 
 state->recordSize = 16;
 state->keySize = 4;
@@ -81,7 +81,7 @@ it.maxKey = &maxKey;
 
 sbtreeInitIterator(state, &it);
 
-while (sbtreeNext(state, &it, (void**) &itKey, (void**) &itData))
+while (sbitsNext(state, &it, (void**) &itKey, (void**) &itData))
 {                      
 	/* Process record */	
 }
