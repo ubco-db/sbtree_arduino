@@ -39,6 +39,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(ARDUINO)
+#include "file/serial_c_iface.h"
+#endif
+
 #include "storage.h"
 
 /* Define type for page ids (physical and logical). */

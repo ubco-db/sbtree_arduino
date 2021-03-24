@@ -45,7 +45,7 @@
 int8_t fileStorageInit(storageState *storage)
 {	 
 	fileStorageState *fs = (fileStorageState*) storage;
-
+	
 	fs->file = fopen(fs->fileName, "w+b");
     if (NULL == fs->file) 
 		return -1;

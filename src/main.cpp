@@ -99,24 +99,23 @@ void setup()
   volumesize = volume.blocksPerCluster();    /* Clusters are collections of blocks */
   volumesize *= volume.clusterCount();      
   volumesize /= 2;                           /* SD card blocks are always 512 bytes (2 blocks are 1KB) */
-  printf("\nVolume size (Kb):  %lu\n", volumesize);    
+  printf("Volume size (Kb):  %lu\n", volumesize);    
   volumesize /= 1024;
-  printf("\nVolume size (Mb):  %lu\n", volumesize);
+  printf("Volume size (Mb):  %lu\n", volumesize);
   volumesize /= 1024;
-  printf("\nVolume size (Gb):  %lu\n", volumesize);  
+  printf("Volume size (Gb):  %lu\n", volumesize);  
   
   /* List all files in the card with date and size */
   printf("\n\nFiles found on the card (name, date and size in bytes): ");
   root.openRoot(volume);
-
+  
   root.ls(LS_R | LS_DATE | LS_SIZE);
 
   /* Delete any files not needed */
   // root.remove(root, "myfile.bin");
-  
+
   SD.begin(4);
-  
-  runalltests_sbtree(); 
+  runalltests_sbtree();   
 }
 
 void loop() 

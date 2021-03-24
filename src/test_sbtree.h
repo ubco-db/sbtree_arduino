@@ -83,13 +83,14 @@ void testIterator(sbtreeState *state)
  * Runs all tests and collects benchmarks
  */ 
 void runalltests_sbtree()
-{
-    printf("\nSTARTING SEQUENTIAL B-TREE TESTS.\n");
+{    
+    printf("\nSTARTING SEQUENTIAL B-TREE TESTS.\n");    
 
     int8_t M = 2;    
-    int32_t numRecords = 1000000;
+    int32_t numRecords = 1000;
     uint32_t numSteps = 10, stepSize = numRecords / numSteps;
     count_t r, numRuns = 3, l;
+    
     uint32_t times[numSteps][numRuns];
     uint32_t reads[numSteps][numRuns];
     uint32_t writes[numSteps][numRuns];    
@@ -97,7 +98,7 @@ void runalltests_sbtree()
     uint32_t rtimes[numSteps][numRuns];
     uint32_t rreads[numSteps][numRuns];
     uint32_t rhits[numSteps][numRuns];    
-   
+    
     for (r=0; r < numRuns; r++)
     {
         printf("\nRun: %d\n", (r+1));
@@ -110,7 +111,7 @@ void runalltests_sbtree()
             printf("Error: Cannot initialize storage!\n");
             return;
         }        
-
+   
         /* Configure memory storage */
         /*
         memStorageState *storage = malloc(sizeof(memStorageState));        
@@ -120,29 +121,46 @@ void runalltests_sbtree()
             return;
         }
         */
-       
+   
         /* Configure buffer */
         dbbuffer* buffer = (dbbuffer*) malloc(sizeof(dbbuffer));
+        if (buffer == NULL)
+        {   printf("Failed to allocate buffer struct.\n");
+            return;
+        }
         buffer->pageSize = 512;
         buffer->numPages = M;
         buffer->status = (id_t*) malloc(sizeof(id_t)*M);
-        buffer->buffer  = malloc((size_t) buffer->numPages * buffer->pageSize);   
+        if (buffer->status == NULL)
+        {   printf("Failed to allocate buffer status array.\n");
+            return;
+        }
+
+        buffer->buffer  = malloc((size_t) buffer->numPages * buffer->pageSize);
+        if (buffer->buffer == NULL)
+        {   printf("Failed to allocate buffer.\n");
+            return;
+        }   
         buffer->storage = (storageState*) storage;       
 
         /* Configure SBTree state */
         sbtreeState* state = (sbtreeState*) malloc(sizeof(sbtreeState));
+        if (state == NULL)
+        {   printf("Failed to allocate SB-tree state struct.\n");
+            return;
+        }
 
         state->recordSize = 16;
         state->keySize = 4;
         state->dataSize = 12;           
         state->buffer = buffer;
-
         state->tempKey = malloc(sizeof(int32_t)); 
-        int8_t* recordBuffer = (int8_t*) malloc(state->recordSize);
 
         /* Initialize SBTree structure */
         sbtreeInit(state);
 
+        int8_t* recordBuffer = (int8_t*) malloc(state->recordSize);
+        
         /* Initial contents of test record. */    
         int32_t i;
         for (i = 0; i < state->recordSize-4; i++) 

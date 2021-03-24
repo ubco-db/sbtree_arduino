@@ -81,12 +81,12 @@ static int8_t byteCompare(void *a, void *b, int16_t size)
                 SBTree algorithm state structure
 */
 void sbtreeInit(sbtreeState *state)
-{
+{	
 	printf("Initializing SBTree.\n");
-	state->recordSize = state->keySize + state->dataSize;
-	printf("Buffer size: %d  Page size: %d Record size: %d\n", state->buffer->numPages, state->buffer->pageSize, state->recordSize);	
+	state->recordSize = state->keySize + state->dataSize;	
+	printf("Buffer size: %d  Page size: %d Record size: %d\n", state->buffer->numPages, state->buffer->pageSize, state->recordSize);		
 	
-	dbbufferInit(state->buffer);
+	dbbufferInit(state->buffer);	
 	state->buffer->activePath = state->activePath;
 
 	state->compareKey = uint32Compare;
