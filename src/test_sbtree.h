@@ -98,7 +98,27 @@ void runalltests_sbtree()
     uint32_t rtimes[numSteps][numRuns];
     uint32_t rreads[numSteps][numRuns];
     uint32_t rhits[numSteps][numRuns];    
-    
+    int8_t   seqdata = 0;
+    SD_FILE  *infile;
+    uint32_t minRange, maxRange;
+
+    if (seqdata != 1)
+    {   /* Open file to read input records */
+    /*
+        infile = fopen("data/sea100K.bin", "r+b");
+        minRange = 1314604380;
+        maxRange = 1609487580;
+        numRecords = 100000;   
+        */     
+        
+        infile = fopen("data/uwa500K.bin", "r+b");
+        minRange = 946713600;
+        maxRange = 977144040;
+        numRecords = 500000;
+
+        stepSize = numRecords / numSteps;
+    }
+
     for (r=0; r < numRuns; r++)
     {
         printf("\nRun: %d\n", (r+1));
@@ -171,29 +191,72 @@ void runalltests_sbtree()
         printf("\nInsert test:\n");
         unsigned long start = millis();  
 
-        /* Insert records into structure */    
-        for (i = 0; i < numRecords; i++)
-        {        
-            *((int32_t*) recordBuffer) = i;
-            *((int32_t*) (recordBuffer+4)) = i;
-        
-            sbtreePut(state, recordBuffer, (void*) (recordBuffer + 4));    
+        /* Insert records into structure */
+        if (seqdata == 1)
+        {    
+            for (i = 0; i < numRecords; i++)
+            {        
+                *((int32_t*) recordBuffer) = i;
+                *((int32_t*) (recordBuffer+4)) = i;
             
-            if (i % stepSize == 0)
-            {           
-                printf("Num: %lu KEY: %lu\n", i, i);
-                // btreePrint(state);               
-                l = i / stepSize -1;
-                if (l < numSteps && l >= 0)
-                {
-                    times[l][r] = (millis()-start);
-                    reads[l][r] = state->buffer->numReads;
-                    writes[l][r] = state->buffer->numWrites;                    
-                    hits[l][r] = state->buffer->bufferHits;                     
+                sbtreePut(state, recordBuffer, (void*) (recordBuffer + 4));    
+                
+                if (i % stepSize == 0)
+                {           
+                    printf("Num: %lu KEY: %lu\n", i, i);
+                    // btreePrint(state);               
+                    l = i / stepSize -1;
+                    if (l < numSteps && l >= 0)
+                    {
+                        times[l][r] = (millis()-start);
+                        reads[l][r] = state->buffer->numReads;
+                        writes[l][r] = state->buffer->numWrites;                    
+                        hits[l][r] = state->buffer->bufferHits;                     
+                    }
+                }       
+            }    
+        }
+        else
+        {   /* Read data from a file */
+            char infileBuffer[512];
+            int8_t headerSize = 16;
+            i = 0;
+            fseek(infile, 0, SEEK_SET);
+
+            while (1)
+            {
+                /* Read page */
+                if (0 == fread(infileBuffer, buffer->pageSize, 1, infile))
+                    break;
+                        
+                /* Process all records on page */
+                int16_t count = *((int16_t*) (infileBuffer+4));                  
+                for (int j=0; j < count; j++)
+                {	
+                    void *buf = (infileBuffer + headerSize + j*state->recordSize);				
+                              
+                    sbtreePut(state, buf, (void*) ((char*)buf + 4));  
+                    // if ( i < 100000)
+                    //   printf("%lu %d %d %d\n", *((uint32_t*) buf), *((int32_t*) (buf+4)), *((int32_t*) (buf+8)), *((int32_t*) (buf+12)));   
+
+                    if (i % stepSize == 0)
+                    {           
+                        printf("Num: %lu KEY: %lu\n", i, *((int32_t*) buf));                
+                        l = i / stepSize -1;
+                        if (l < numSteps && l >= 0)
+                        {
+                           times[l][r] = (millis()-start);
+                            reads[l][r] = state->buffer->numReads;
+                            writes[l][r] = state->buffer->numWrites;                    
+                            hits[l][r] = state->buffer->bufferHits;                        
+                        }
+                    }  
+                    i++;  
                 }
-            }       
-        }    
-    
+            }  
+            numRecords = i;    
+        }
+
         sbtreeFlush(state);    
 
         unsigned long end = millis();
@@ -232,6 +295,25 @@ void runalltests_sbtree()
                 // btreePrint(state);               
                 l = i / stepSize - 1;
                 if (l < numSteps && l >= 0)
+                {
+                    rtimes[l][r] = (millis()-start);
+                    rreads[l][r] = state->buffer->numReads;                    
+                    rhits[l][r] = state->buffer->bufferHits;                     
+                }
+            }   
+        }
+        else
+        {   /* Data from file */
+            char infileBuffer[512];
+            int8_t headerSize = 16;
+            i = 0;
+            int8_t queryType = 2;
+
+            if (queryType == 1)
+            {   /* Query each record from original data set. */
+                fseek(infile, 0, SEEK_SET);
+
+                while (1)
                 {
                     printf("Num: %lu KEY: %lu\n", i, key);
                     rtimes[l][r] = (millis()-start);
