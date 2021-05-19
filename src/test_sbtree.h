@@ -86,10 +86,10 @@ void runalltests_sbtree()
 {    
     printf("\nSTARTING SEQUENTIAL B-TREE TESTS.\n");    
 
-    int8_t M = 2;    
-    int32_t numRecords = 1000;
+    int8_t M = 3;    
+    int32_t numRecords = 10000;
     uint32_t numSteps = 10, stepSize = numRecords / numSteps;
-    count_t r, numRuns = 3, l;
+    count_t r, numRuns = 1, l;
     
     uint32_t times[numSteps][numRuns];
     uint32_t reads[numSteps][numRuns];
@@ -224,6 +224,7 @@ void runalltests_sbtree()
             else if (*((int32_t*) recordBuffer) != key)
             {   printf("ERROR: Wrong data for: %lu\n", key);
                 printf("Key: %lu Data: %lu\n", key, *((uint32_t*) recordBuffer));
+             //   return;
             }
 
             if (i % stepSize == 0)
@@ -232,6 +233,7 @@ void runalltests_sbtree()
                 l = i / stepSize - 1;
                 if (l < numSteps && l >= 0)
                 {
+                    printf("Num: %lu KEY: %lu\n", i, key);
                     rtimes[l][r] = (millis()-start);
                     rreads[l][r] = state->buffer->numReads;                    
                     rhits[l][r] = state->buffer->bufferHits;                     
