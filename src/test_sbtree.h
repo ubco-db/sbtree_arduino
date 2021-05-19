@@ -86,10 +86,10 @@ void runalltests_sbtree()
 {    
     printf("\nSTARTING SEQUENTIAL B-TREE TESTS.\n");    
 
-    int8_t M = 3;    
-    int32_t numRecords = 10000;
+    int8_t M = 2;    
+    int32_t numRecords = 1000;
     uint32_t numSteps = 10, stepSize = numRecords / numSteps;
-    count_t r, numRuns = 1, l;
+    count_t r, numRuns = 3, l;
     
     uint32_t times[numSteps][numRuns];
     uint32_t reads[numSteps][numRuns];
@@ -278,29 +278,31 @@ void runalltests_sbtree()
         start = millis();
 
         /* Query all values in tree */
-        for (i = 0; i < numRecords; i++)    
-        { 
-            int32_t key = i;
-            int8_t result = sbtreeGet(state, &key, recordBuffer);
-            if (result != 0) 
-                printf("ERROR: Failed to find: %lu\n", key);
-            else if (*((int32_t*) recordBuffer) != key)
-            {   printf("ERROR: Wrong data for: %lu\n", key);
-                printf("Key: %lu Data: %lu\n", key, *((uint32_t*) recordBuffer));
-             //   return;
-            }
-
-            if (i % stepSize == 0)
-            {                           
-                // btreePrint(state);               
-                l = i / stepSize - 1;
-                if (l < numSteps && l >= 0)
-                {
-                    rtimes[l][r] = (millis()-start);
-                    rreads[l][r] = state->buffer->numReads;                    
-                    rhits[l][r] = state->buffer->bufferHits;                     
+        if (seqdata == 1)
+        {
+            for (i = 0; i < numRecords; i++)    
+            { 
+                int32_t key = i;
+                int8_t result = sbtreeGet(state, &key, recordBuffer);
+                if (result != 0) 
+                    printf("ERROR: Failed to find: %lu\n", key);
+                else if (*((int32_t*) recordBuffer) != key)
+                {   printf("ERROR: Wrong data for: %lu\n", key);
+                    printf("Key: %lu Data: %lu\n", key, *((uint32_t*) recordBuffer));
                 }
-            }   
+
+                if (i % stepSize == 0)
+                {                           
+                    // btreePrint(state);               
+                    l = i / stepSize - 1;
+                    if (l < numSteps && l >= 0)
+                    {
+                        rtimes[l][r] = (millis()-start);
+                        rreads[l][r] = state->buffer->numReads;                    
+                        rhits[l][r] = state->buffer->bufferHits;                     
+                    }
+                }   
+            }
         }
         else
         {   /* Data from file */
@@ -315,12 +317,70 @@ void runalltests_sbtree()
 
                 while (1)
                 {
-                    printf("Num: %lu KEY: %lu\n", i, key);
-                    rtimes[l][r] = (millis()-start);
-                    rreads[l][r] = state->buffer->numReads;                    
-                    rhits[l][r] = state->buffer->bufferHits;                     
-                }
-            }   
+                    /* Read page */
+                    if (0 == fread(infileBuffer, buffer->pageSize, 1, infile))
+                        break;
+                            
+                    /* Process all records on page */
+                    int16_t count = *((int16_t*) (infileBuffer+4));                  
+                    for (int j=0; j < count; j++)
+                    {	
+                        void *buf = (infileBuffer + headerSize + j*state->recordSize);				
+                        int32_t* key = (int32_t*)  buf;
+                    
+                        int8_t result = sbtreeGet(state, key, recordBuffer);  
+                        if (result != 0) 
+                            printf("ERROR: Failed to find: %lu\n", *key);    
+                        if (*((int32_t*) recordBuffer) != *((int32_t*) ((char*)buf+4)))
+                        {   
+                            printf("ERROR: Wrong data for: Key: %lu Data: %lu ", *key, *((int32_t*) recordBuffer));
+                            printf("%lu %d %d %d\n", *((uint32_t*) buf), *((int32_t*) ( (char*) buf+4)), *((int32_t*) ((char*) buf+8)), *((int32_t*) ((char*) buf+12))); 
+                            result = sbtreeGet(state, key, recordBuffer);  
+                            return;
+                        } 
+
+                        if (i % stepSize == 0)
+                        {                                                         
+                            l = i / stepSize - 1;
+                            printf("Num: %lu KEY: %lu\n", i, *key);     
+                            if (l < numSteps && l >= 0)
+                            {
+                                rtimes[l][r] = (millis()-start);
+                                rreads[l][r] = state->buffer->numReads;                    
+                                rhits[l][r] = state->buffer->bufferHits;                        
+                            }
+                        }     
+                        i++;  
+                    }
+                }  
+            }
+            else if (queryType == 2)
+            {   /* Query random values in range. May not exist in data set. */
+                i = 0;
+                int32_t num = maxRange - minRange;
+                printf("Rge: %d Rand max: %d\n", num, RAND_MAX);
+                while (i < numRecords)
+                {                    
+                    double scaled = ((double)rand()*(double)rand())/RAND_MAX/RAND_MAX;				
+                    int32_t key = (num+1)*scaled + minRange;  
+                                   
+                    // printf("Key :%d\n", key);           
+                    sbtreeGet(state, &key, recordBuffer);                          
+
+                    if (i % stepSize == 0)
+                    {                                                         
+                        l = i / stepSize - 1;
+                        printf("Num: %lu KEY: %lu\n", i, key);     
+                        if (l < numSteps && l >= 0)
+                        {
+                            rtimes[l][r] = (millis()-start);
+                            rreads[l][r] = state->buffer->numReads;                    
+                            rhits[l][r] = state->buffer->bufferHits;                         
+                        }
+                    }     
+                    i++;  
+                }                
+            } 
         }
 
         l = numSteps-1;       
