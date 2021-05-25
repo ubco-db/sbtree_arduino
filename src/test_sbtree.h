@@ -86,7 +86,7 @@ void runalltests_sbtree()
 {    
     printf("\nSTARTING SEQUENTIAL B-TREE TESTS.\n");    
 
-    int8_t M = 2;    
+    int8_t M = 3;    
     int32_t numRecords = 1000;
     uint32_t numSteps = 10, stepSize = numRecords / numSteps;
     count_t r, numRuns = 3, l;
@@ -101,6 +101,7 @@ void runalltests_sbtree()
     int8_t   seqdata = 0;
     SD_FILE  *infile;
     uint32_t minRange, maxRange;
+    char infileBuffer[512];
 
     if (seqdata != 1)
     {   /* Open file to read input records */
@@ -114,7 +115,7 @@ void runalltests_sbtree()
         infile = fopen("data/uwa500K.bin", "r+b");
         minRange = 946713600;
         maxRange = 977144040;
-        numRecords = 500000;
+        numRecords = 100000;
 
         stepSize = numRecords / numSteps;
     }
@@ -217,8 +218,7 @@ void runalltests_sbtree()
             }    
         }
         else
-        {   /* Read data from a file */
-            char infileBuffer[512];
+        {   /* Read data from a file */            
             int8_t headerSize = 16;
             i = 0;
             fseek(infile, 0, SEEK_SET);
@@ -305,8 +305,7 @@ void runalltests_sbtree()
             }
         }
         else
-        {   /* Data from file */
-            char infileBuffer[512];
+        {   /* Data from file */            
             int8_t headerSize = 16;
             i = 0;
             int8_t queryType = 2;
@@ -359,7 +358,10 @@ void runalltests_sbtree()
                 i = 0;
                 int32_t num = maxRange - minRange;
                 printf("Rge: %d Rand max: %d\n", num, RAND_MAX);
-                while (i < numRecords)
+                int64_t numRec = 10000;
+                int32_t stepS = 1000;
+
+                while (i < numRec)
                 {                    
                     double scaled = ((double)rand()*(double)rand())/RAND_MAX/RAND_MAX;				
                     int32_t key = (num+1)*scaled + minRange;  
@@ -367,9 +369,9 @@ void runalltests_sbtree()
                     // printf("Key :%d\n", key);           
                     sbtreeGet(state, &key, recordBuffer);                          
 
-                    if (i % stepSize == 0)
+                    if (i % stepS == 0)
                     {                                                         
-                        l = i / stepSize - 1;
+                        l = i / stepS - 1;
                         printf("Num: %lu KEY: %lu\n", i, key);     
                         if (l < numSteps && l >= 0)
                         {
