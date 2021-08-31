@@ -156,6 +156,7 @@ void runalltests_sbtree()
         {   printf("Failed to allocate buffer status array.\n");
             return;
         }
+        buffer->modified = (uint8_t*) malloc(sizeof(uint8_t)*M);
 
         buffer->buffer  = malloc((size_t) buffer->numPages * buffer->pageSize);
         if (buffer->buffer == NULL)
@@ -251,12 +252,18 @@ void runalltests_sbtree()
                             hits[l][r] = state->buffer->bufferHits;                        
                         }
                     }  
-                    i++;  
+                    i++; 
+                    /* Allows stopping at set number of records instead of reading entire file */
+                    if (i == numRecords)
+                    {   maxRange = *((uint32_t*) buf);
+                        printf("Num: %lu KEY: %lu\n", i, *((int32_t*) buf));     
+                        goto doneread;              
+                    } 
                 }
             }  
             numRecords = i;    
         }
-
+doneread:
         sbtreeFlush(state);    
 
         unsigned long end = millis();
